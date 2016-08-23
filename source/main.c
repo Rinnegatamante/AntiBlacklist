@@ -79,7 +79,7 @@ int main(){
 			case MAIN_MENU:
 				vita2d_start_drawing();
 				vita2d_clear_screen();
-				drawLoopText(20,"AntiBlacklist v.1.0 by Rinnegatamante",white);
+				drawLoopText(20,"AntiBlacklist v.1.1 by Rinnegatamante",white);
 				drawLoopText(60,"Press Cross to install v1 patch.",white);
 				drawLoopText(80,"Press Circle to install v2 patch.",white);
 				drawLoopText(100,"Press Square to uninstall v2 patch.",white);
@@ -102,18 +102,44 @@ int main(){
 				FILE* f1 = fopen("ur0:/game/launch/list_launch_vita.dat", "wb");
 				FILE* f2 = fopen("ur0:/game/launch/list_launch_emu.dat", "wb");
 				if (f1 == NULL || f2 == NULL){
-					drawText(60,"ERROR: Cannot open list_launch files.", red);
-					drawText(80,"v1 patch aborted...", white);
+					drawText(60,"ERROR: Cannot open list_launch files on ur0:/.", red);
 					if (f1 != NULL) fclose(f1);
 					if (f2 != NULL) fclose(f2);
 				}else{
-					drawText(60,"Patching list_launch files...",white);
+					drawText(60,"Patching list_launch files on ur0:/...",white);
 					fwrite(&whitelist, 1, WHITELIST_SIZE, f1);
 					fwrite(&whitelist, 1, WHITELIST_SIZE, f2);
 					fclose(f1);
 					fclose(f2);
-					drawText(80,"Done!",green);
 				}
+				f1 = fopen("ux0:/game/launch/list_launch_vita.dat", "wb");
+				f2 = fopen("ux0:/game/launch/list_launch_emu.dat", "wb");
+				if (f1 == NULL || f2 == NULL){
+					drawText(80,"ERROR: Cannot open list_launch files on ux0:/.", red);
+					if (f1 != NULL) fclose(f1);
+					if (f2 != NULL) fclose(f2);
+				}else{
+					drawText(80,"Patching list_launch files on ux0:/...",white);
+					fwrite(&whitelist, 1, WHITELIST_SIZE, f1);
+					fwrite(&whitelist, 1, WHITELIST_SIZE, f2);
+					fclose(f1);
+					fclose(f2);
+				}
+				f1 = fopen("vs0:/data/internal/launch/list_launch_vita.dat", "wb");
+				f2 = fopen("vs0:/data/internal/launch/list_launch_emu.dat", "wb");
+				if (f1 == NULL || f2 == NULL){
+					drawText(100,"ERROR: Cannot open list_launch files on vs0:/.", red);
+					if (f1 != NULL) fclose(f1);
+					if (f2 != NULL) fclose(f2);
+				}else{
+					drawText(100,"Patching list_launch files on vs0:/...",white);
+					fwrite(&whitelist, 1, WHITELIST_SIZE, f1);
+					fwrite(&whitelist, 1, WHITELIST_SIZE, f2);
+					fclose(f1);
+					fclose(f2);
+					drawText(120,"Done!",green);
+				}
+				
 				sceKernelDelayThread(2000000);
 				state = MAIN_MENU;
 				break;
