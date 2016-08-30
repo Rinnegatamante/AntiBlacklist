@@ -7,7 +7,7 @@
 #include <psp2/sysmodule.h>
 #include <psp2/apputil.h>
 
-#define WHITELIST_SIZE 40
+#define WHITELIST_SIZE 41
 #define MAIN_MENU 0
 #define INSTALL_V1 1
 #define INSTALL_V2 2
@@ -65,12 +65,22 @@ int main(){
 	sqlite3 *db;
 	int fd;
 	
-	// v1 patch file
-	uint8_t whitelist[WHITELIST_SIZE] = {
-		0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x5f, 0x76, 0x65, 0x72,
-		0x73, 0x69, 0x6f, 0x6e, 0x3a, 0x30, 0x30, 0x31, 0x0a, 0x6c,
-		0x69, 0x73, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x3a, 0x62,
-		0x0a, 0x4c, 0x56, 0x45, 0x52, 0x30, 0x30, 0x31, 0x30, 0x31
+	// v1 patch file (list_launch_emu.dat fw3.60 LVER00111)
+	uint8_t whitelist_emu[WHITELIST_SIZE] = {
+		0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x5f, 0x76, 0x65, 0x72, 
+		0x73, 0x69, 0x6f, 0x6e, 0x3a, 0x30, 0x30, 0x31, 0x0a, 0x6c, 
+		0x69, 0x73, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x3a, 0x62, 
+		0x0a, 0x4c, 0x56, 0x45, 0x52, 0x30, 0x30, 0x31, 0x31, 0x31, 
+		0x0a
+	};
+	
+	// v1 patch file (list_launch_vita.dat fw3.60 LVER00125)
+	uint8_t whitelist_vita[WHITELIST_SIZE] = {
+		0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x5f, 0x76, 0x65, 0x72, 
+		0x73, 0x69, 0x6f, 0x6e, 0x3a, 0x30, 0x30, 0x31, 0x0a, 0x6c, 
+		0x69, 0x73, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x3a, 0x62, 
+		0x0a, 0x4c, 0x56, 0x45, 0x52, 0x30, 0x30, 0x31, 0x32, 0x35, 
+		0x0a
 	};
 	
 	// Main loop
@@ -107,8 +117,8 @@ int main(){
 					if (f2 != NULL) fclose(f2);
 				}else{
 					drawText(60,"Patching list_launch files on ur0:/...",white);
-					fwrite(&whitelist, 1, WHITELIST_SIZE, f1);
-					fwrite(&whitelist, 1, WHITELIST_SIZE, f2);
+					fwrite(&whitelist_vita, 1, WHITELIST_SIZE, f1);
+					fwrite(&whitelist_emu, 1, WHITELIST_SIZE, f2);
 					fclose(f1);
 					fclose(f2);
 				}
@@ -120,8 +130,8 @@ int main(){
 					if (f2 != NULL) fclose(f2);
 				}else{
 					drawText(80,"Patching list_launch files on ux0:/...",white);
-					fwrite(&whitelist, 1, WHITELIST_SIZE, f1);
-					fwrite(&whitelist, 1, WHITELIST_SIZE, f2);
+					fwrite(&whitelist_vita, 1, WHITELIST_SIZE, f1);
+					fwrite(&whitelist_emu, 1, WHITELIST_SIZE, f2);
 					fclose(f1);
 					fclose(f2);
 				}
@@ -133,8 +143,8 @@ int main(){
 					if (f2 != NULL) fclose(f2);
 				}else{
 					drawText(100,"Patching list_launch files on vs0:/...",white);
-					fwrite(&whitelist, 1, WHITELIST_SIZE, f1);
-					fwrite(&whitelist, 1, WHITELIST_SIZE, f2);
+					fwrite(&whitelist_vita, 1, WHITELIST_SIZE, f1);
+					fwrite(&whitelist_emu, 1, WHITELIST_SIZE, f2);
 					fclose(f1);
 					fclose(f2);
 					drawText(120,"Done!",green);
