@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <psp2/sysmodule.h>
 #include <psp2/apputil.h>
+#include <psp2/io/fcntl.h>
+#include <stdarg.h>
+#include <string.h>
 
 #define WHITELIST_SIZE 41
 #define MAIN_MENU 0
@@ -13,6 +16,7 @@
 #define INSTALL_V2 2
 #define UNINSTALL_V2 3
 #define EXIT 4
+#define REBOOT 5
 
 extern char* sqlite3_temp_directory;
 
@@ -64,6 +68,7 @@ int main(){
 	SceCtrlData pad;
 	sqlite3 *db;
 	int fd;
+	int reboot_needed = 0;
 	
 	// v1 patch file (list_launch_emu.dat fw3.60 LVER00111)
 	uint8_t whitelist_emu[WHITELIST_SIZE] = {
@@ -122,23 +127,22 @@ int main(){
 					fclose(f1);
 					fclose(f2);
 				}
-				f1 = fopen("ux0:/game/launch/list_launch_vita.dat", "wb");
-				f2 = fopen("ux0:/game/launch/list_launch_emu.dat", "wb");
-				if (f1 == NULL || f2 == NULL){
-					drawText(80,"ERROR: Cannot open list_launch files on ux0:/.", red);
-					if (f1 != NULL) fclose(f1);
-					if (f2 != NULL) fclose(f2);
-				}else{
-					drawText(80,"Patching list_launch files on ux0:/...",white);
-					fwrite(&whitelist_vita, 1, WHITELIST_SIZE, f1);
-					fwrite(&whitelist_emu, 1, WHITELIST_SIZE, f2);
-					fclose(f1);
-					fclose(f2);
-				}
+
+				// https://github.com/tomtomdu80/VitaRW
+				// mount vs0 as RW  (0x300=vs0) ((3 * 0x100))
+				drawText(80,"Mounting vs0 as read-write to change files ..",white);
+				void *buf = malloc(0x100);
+				vshIoUmount(3 * 0x100, 0, 0, 0); // id, unk1, unk2, unk3 (flags ?)
+				_vshIoMount(3 * 0x100, 0, 2, buf); // id, unk, permission, work_buffer
+				
+				// this delay may not be necessary but included just in case
+				sceKernelDelayThread(3 * 1000 * 1000);
+				
 				f1 = fopen("vs0:/data/internal/launch/list_launch_vita.dat", "wb");
 				f2 = fopen("vs0:/data/internal/launch/list_launch_emu.dat", "wb");
 				if (f1 == NULL || f2 == NULL){
 					drawText(100,"ERROR: Cannot open list_launch files on vs0:/.", red);
+					drawText(120,"(You must first launch VitaRW to make this change)", white);
 					if (f1 != NULL) fclose(f1);
 					if (f2 != NULL) fclose(f2);
 				}else{
@@ -148,10 +152,19 @@ int main(){
 					fclose(f1);
 					fclose(f2);
 					drawText(120,"Done!",green);
+					reboot_needed = 1;
 				}
 				
-				sceKernelDelayThread(2000000);
-				state = MAIN_MENU;
+				if (reboot_needed == 1){
+					drawText(140,"Automatically rebooting in 3 seconds..",white);
+					sceKernelDelayThread(3 * 1000 * 1000);
+					state = REBOOT;
+				}
+				else{
+					drawText(140,"Returning to menu in 2 seconds..",white);
+					sceKernelDelayThread(2 * 1000 * 1000);
+					state = MAIN_MENU;
+				}
 				break;
 			case INSTALL_V2:
 				clearScreen();
@@ -301,6 +314,11 @@ int main(){
 					}
 				state = MAIN_MENU;
 				break;
+				
+			case REBOOT:
+				return scePowerRequestColdReset();
+				break;
+				
 			case EXIT:
 				exit_code = 1;
 				break;
