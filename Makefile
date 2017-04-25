@@ -1,10 +1,9 @@
 TARGET		:= AntiBlacklist
 TITLE		:= ABLK00001
-SOURCES		:= source/include/lua source/include/ftp source/include source \
-			source/include/audiodec
+SOURCES		:= source
 INCLUDES	:= include
 
-LIBS = -lvita2d -lSceKernel_stub \
+LIBS = -lvita2d -lSceLibKernel_stub \
 	-lSceAppmgr_stub -lSceSysmodule_stub -lSceCtrl_stub \
 	-lm -lSceAppUtil_stub -lScePgf_stub -ljpeg -lfreetype \
 	-lc -lScePower_stub -lSceCommonDialog_stub -lpng16 -lz \
