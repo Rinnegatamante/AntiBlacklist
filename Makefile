@@ -3,11 +3,10 @@ TITLE		:= ABLK00001
 SOURCES		:= source
 INCLUDES	:= include
 
-LIBS = -lvita2d -lSceLibKernel_stub \
-	-lSceAppmgr_stub -lSceSysmodule_stub -lSceCtrl_stub \
-	-lm -lSceAppUtil_stub -lScePgf_stub -ljpeg -lfreetype \
-	-lc -lScePower_stub -lSceCommonDialog_stub -lpng16 -lz \
-	-lSceGxm_stub -lSceDisplay_stub -lsqlite3
+LIBS = -lvita2d -lSceLibKernel_stub -lSceVshBridge_stub \
+	-lSceCtrl_stub -lm -lScePgf_stub -ljpeg -lc \
+	-lScePower_stub -lSceCommonDialog_stub -lpng16 -lfreetype \
+	-lz -lSceSysmodule_stub -lSceGxm_stub -lSceDisplay_stub
 
 CFILES   := $(foreach dir,$(SOURCES), $(wildcard $(dir)/*.c))
 CPPFILES   := $(foreach dir,$(SOURCES), $(wildcard $(dir)/*.cpp))
@@ -17,7 +16,7 @@ OBJS     := $(addsuffix .o,$(BINFILES)) $(CFILES:.c=.o) $(CPPFILES:.cpp=.o)
 PREFIX  = arm-vita-eabi
 CC      = $(PREFIX)-gcc
 CXX      = $(PREFIX)-g++
-CFLAGS  = -Wl,-q -O3 -Wall
+CFLAGS  = -Wl,-q -O3 -Wall -DSQLITE_OS_OTHER=1 -DSQLITE_TEMP_STORE=3 -DSQLITE_THREADSAFE=0
 CXXFLAGS  = $(CFLAGS) -fno-exceptions -std=gnu++11
 ASFLAGS = $(CFLAGS)
 
