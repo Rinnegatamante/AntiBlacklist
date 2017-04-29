@@ -1,20 +1,35 @@
-#include <psp2/kernel/processmgr.h>
-#include <psp2/ctrl.h>
+#include <vitasdk.h>
 #include <stdio.h>
-#include <sqlite3.h> 
+#include "sqlite3.h" 
 #include <vita2d.h> 
 #include <stdlib.h>
-#include <psp2/sysmodule.h>
-#include <psp2/apputil.h>
+#include <string.h>
 
 #define WHITELIST_SIZE 41
-#define MAIN_MENU 0
-#define INSTALL_V1 1
-#define INSTALL_V2 2
+
+#define MAIN_MENU    0
+#define INSTALL_V1   1
+#define INSTALL_V2   2
 #define UNINSTALL_V2 3
-#define EXIT 4
+#define EXIT         4
 
 extern char* sqlite3_temp_directory;
+
+// Copy-pasted from VitaShell by TheFlow
+int vshIoUmount(int id, int a2, int a3, int a4);
+int _vshIoMount(int id, const char *path, int permission, void *buf);
+int vshIoMount(int id, const char *path, int permission, int a4, int a5, int a6) {
+	uint32_t buf[6];
+
+	buf[0] = a4;
+	buf[1] = a5;
+	buf[2] = a6;
+	buf[3] = 0;
+	buf[4] = 0;
+	buf[5] = 0;
+
+	return _vshIoMount(id, path, permission, buf);
+}
 
 static int callback(void *data, int argc, char **argv, char **azColName){
 	int i;
@@ -89,7 +104,7 @@ int main(){
 			case MAIN_MENU:
 				vita2d_start_drawing();
 				vita2d_clear_screen();
-				drawLoopText(20,"AntiBlacklist v.1.1 by Rinnegatamante",white);
+				drawLoopText(20,"AntiBlacklist v.1.2 by Rinnegatamante",white);
 				drawLoopText(60,"Press Cross to install v1 patch.",white);
 				drawLoopText(80,"Press Circle to install v2 patch.",white);
 				drawLoopText(100,"Press Square to uninstall v2 patch.",white);
@@ -109,6 +124,8 @@ int main(){
 				// Applying v1 patch
 				drawText(20,"*** v1 Patch ***",white);
 				drawText(40,"Opening list_launch files...",white);
+				
+				// ur0 files overwriting
 				FILE* f1 = fopen("ur0:/game/launch/list_launch_vita.dat", "wb");
 				FILE* f2 = fopen("ur0:/game/launch/list_launch_emu.dat", "wb");
 				if (f1 == NULL || f2 == NULL){
@@ -122,6 +139,8 @@ int main(){
 					fclose(f1);
 					fclose(f2);
 				}
+				
+				// ux0 files overwriting
 				f1 = fopen("ux0:/game/launch/list_launch_vita.dat", "wb");
 				f2 = fopen("ux0:/game/launch/list_launch_emu.dat", "wb");
 				if (f1 == NULL || f2 == NULL){
@@ -135,22 +154,39 @@ int main(){
 					fclose(f1);
 					fclose(f2);
 				}
+				
+				// vs0 files overwriting
+				drawText(100,"Mounting vs0:/ partition with RW permissions...", white);
+				vshIoUmount(0x300, 0, 0, 0);
+				vshIoMount(0x300, NULL, 2, 0, 0, 0);
 				f1 = fopen("vs0:/data/internal/launch/list_launch_vita.dat", "wb");
 				f2 = fopen("vs0:/data/internal/launch/list_launch_emu.dat", "wb");
 				if (f1 == NULL || f2 == NULL){
-					drawText(100,"ERROR: Cannot open list_launch files on vs0:/.", red);
+					drawText(120,"ERROR: Cannot open list_launch files on vs0:/.", red);
 					if (f1 != NULL) fclose(f1);
 					if (f2 != NULL) fclose(f2);
+					drawText(140,"Patch partially applied, run VitaRW to fully install it.",green);
 				}else{
-					drawText(100,"Patching list_launch files on vs0:/...",white);
+					drawText(120,"Patching list_launch files on vs0:/...",white);
 					fwrite(&whitelist_vita, 1, WHITELIST_SIZE, f1);
 					fwrite(&whitelist_emu, 1, WHITELIST_SIZE, f2);
 					fclose(f1);
 					fclose(f2);
-					drawText(120,"Done!",green);
+					drawText(140,"Mounting vs0:/ partition with R permissions...", white);
+					vshIoUmount(0x300, 0, 0, 0);
+					vshIoUmount(0x300, 1, 0, 0);
+					vshIoMount(0x300, NULL, 0, 0, 0, 0);
+					f1 = fopen("vs0:/data/internal/launch/list_launch_vita.dat", "rb+");
+					if (f1 != NULL){
+						drawText(160,"ERROR: Failed! vs0:/ is still writeable!!!", red);
+						fclose(f1);
+					}
+					drawText(160 + ((f1 != NULL) ? 20 : 0),"Done!",green);
 				}
 				
-				sceKernelDelayThread(2000000);
+				drawText(180 + ((f1 != NULL) ? 20 : 0),"Press Triangle to return back.",green);
+				do{sceCtrlPeekBufferPositive(0, &pad, 1);}while(!(pad.buttons & SCE_CTRL_TRIANGLE));
+				
 				state = MAIN_MENU;
 				break;
 			case INSTALL_V2:
@@ -211,18 +247,38 @@ int main(){
 					// Closing app.db
 					drawText(140,"Closing app database",white);
 					sqlite3_close(db);
-					drawText(160,"Done!",green);
 					
-					// Drawing instructions
-					drawText(200,"To make changes effective you must:",green);
-					drawText(220,"- Power off your PSVITA TV system.",green);	
-					drawText(240,"- Eject memory card.",green);
-					drawText(260,"- Power on console and wait database refreshing.",green);
-					drawText(280,"- Power off your PSVITA TV system.",green);
-					drawText(300,"- Reinsert memory card.",green);
-					drawText(320,"- Power on your console.",green);		
-					drawText(360,"Press Triangle to return main menu",green);		
+					//Triggering a database restore
+					drawText(160,"Nulling MID value in id.dat",white);
+					FILE* fd = fopen("ux0:/id.dat", "r+");
+					fseek(fd, 0, SEEK_END);
+					int id_size = ftell(fd);
+					char* id_buf = (char*)malloc(id_size);
+					fseek(fd, 0, SEEK_SET);
+					fread(id_buf, id_size, 1, fd);
+					char* mid_offs = strstr(id_buf, "MID=");
+					if (mid_offs == NULL){
+						fseek(fd, 0, SEEK_END); // Just to be sure
+						fwrite("\nMID=\n", 6, 1, fd);
+						fclose(fd);
+					}else{
+						fclose(fd);
+						fd = fopen("ux0:/id.dat", "w+");
+						char* mid_end = strstr(mid_offs, "\n");
+						if (mid_end == NULL) fwrite(id_buf, mid_offs - id_buf + 4, 1, fd);
+						else{
+							memcpy(&mid_offs[4], mid_end, id_size - (mid_end - id_buf));
+							fwrite(id_buf, id_size - (mid_end - (mid_offs + 4)), 1, fd);
+						}
+						fclose(fd);
+					}
+					
+					drawText(200,"Done!",green);
+					drawText(240,"To make changes effective, a reboot is required",green);
+					drawText(260,"Press Triangle to perform a console reboot",green);
+					
 					do{sceCtrlPeekBufferPositive(0, &pad, 1);}while(!(pad.buttons & SCE_CTRL_TRIANGLE));
+					scePowerRequestColdReset();
 					
 				}
 				state = MAIN_MENU;
@@ -285,20 +341,40 @@ int main(){
 					// Closing app.db
 					drawText(140,"Closing app database",white);
 					sqlite3_close(db);
-					drawText(160,"Done!",green);
 					
-					// Drawing instructions
-					drawText(200,"To make changes effective you must:",green);
-					drawText(220,"- Power off your PSVITA TV system.",green);	
-					drawText(240,"- Eject memory card.",green);
-					drawText(260,"- Power on console and wait database refreshing.",green);
-					drawText(280,"- Power off your PSVITA TV system.",green);
-					drawText(300,"- Reinsert memory card.",green);
-					drawText(320,"- Power on your console.",green);		
-					drawText(360,"Press Triangle to return main menu",green);		
-					do{sceCtrlPeekBufferPositive(0, &pad, 1);}while(!(pad.buttons & SCE_CTRL_TRIANGLE));
-					
+					//Triggering a database restore
+					drawText(160,"Nulling MID value in id.dat",white);
+					FILE* fd = fopen("ux0:/id.dat", "r+");
+					fseek(fd, 0, SEEK_END);
+					int id_size = ftell(fd);
+					char* id_buf = (char*)malloc(id_size);
+					fseek(fd, 0, SEEK_SET);
+					fread(id_buf, id_size, 1, fd);
+					char* mid_offs = strstr(id_buf, "MID=");
+					if (mid_offs == NULL){
+						fseek(fd, 0, SEEK_END); // Just to be sure
+						fwrite("\nMID=\n", 6, 1, fd);
+						fclose(fd);
+					}else{
+						fclose(fd);
+						fd = fopen("ux0:/id.dat", "w+");
+						char* mid_end = strstr(mid_offs, "\n");
+						if (mid_end == NULL) fwrite(id_buf, mid_offs - id_buf + 4, 1, fd);
+						else{
+							memcpy(&mid_offs[4], mid_end, id_size - (mid_end - id_buf));
+							fwrite(id_buf, id_size - (mid_end - (mid_offs + 4)), 1, fd);
+						}
+						fclose(fd);
 					}
+					
+					drawText(200,"Done!",green);
+					drawText(220,"To make changes effective, a reboot is required",green);
+					drawText(240,"Press Triangle to perform a console reboot",green);
+					
+					do{sceCtrlPeekBufferPositive(0, &pad, 1);}while(!(pad.buttons & SCE_CTRL_TRIANGLE));
+					scePowerRequestColdReset();
+					
+				}
 				state = MAIN_MENU;
 				break;
 			case EXIT:
@@ -307,8 +383,7 @@ int main(){
 		}
 		if (exit_code)	break;
 	}
-		
-	sceKernelExitProcess(0);
+	
 	return 0;
 	
 }
