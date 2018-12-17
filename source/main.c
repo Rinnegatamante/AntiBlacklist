@@ -243,13 +243,21 @@ int main(){
 						sqlite3_free(zErrMsg);
 						drawText(460,error,red);
 					}
-		
+					sprintf(query,"%s","CREATE TRIGGER CHANGE_FEATURE_PSTV AFTER INSERT ON tbl_appinfo WHEN 1=1 BEGIN UPDATE tbl_appinfo SET val = val & ~8 WHERE key='2412347057' and titleid=new.titleid; END;");
+					drawText(140,"Executing 5th query",white);
+					fd = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+					if( fd != SQLITE_OK ){
+						char error[512];
+						sprintf(error, "ERROR: SQL error: %s", zErrMsg);
+						sqlite3_free(zErrMsg);
+						drawText(460,error,red);
+					}		
 					// Closing app.db
-					drawText(140,"Closing app database",white);
+					drawText(160,"Closing app database",white);
 					sqlite3_close(db);
 					
 					//Triggering a database restore
-					drawText(160,"Nulling MID value in id.dat",white);
+					drawText(180,"Nulling MID value in id.dat",white);
 					FILE* fd = fopen("ux0:/id.dat", "r+");
 					fseek(fd, 0, SEEK_END);
 					int id_size = ftell(fd);
@@ -337,13 +345,22 @@ int main(){
 						sqlite3_free(zErrMsg);
 						drawText(460,error,red);
 					}
+					sprintf(query,"%s","DROP TRIGGER CHANGE_FEATURE_PSTV;");
+					drawText(140,"Executing 5th query",white);
+					fd = sqlite3_exec(db, query, callback, 0, &zErrMsg);
+					if( fd != SQLITE_OK ){
+						char error[512];
+						sprintf(error, "ERROR: SQL error: %s", zErrMsg);
+						sqlite3_free(zErrMsg);
+						drawText(460,error,red);
+					}
 		
 					// Closing app.db
-					drawText(140,"Closing app database",white);
+					drawText(160,"Closing app database",white);
 					sqlite3_close(db);
 					
 					//Triggering a database restore
-					drawText(160,"Nulling MID value in id.dat",white);
+					drawText(180,"Nulling MID value in id.dat",white);
 					FILE* fd = fopen("ux0:/id.dat", "r+");
 					fseek(fd, 0, SEEK_END);
 					int id_size = ftell(fd);
