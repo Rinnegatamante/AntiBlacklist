@@ -258,8 +258,7 @@ int main(){
 					
 					//Triggering a database restore
 					sceRegMgrSetKeyInt("/CONFIG/SHELL", "appdb_rebuild_flag", 0);
-					
-					
+										
 					drawText(200,"Done!",green);
 					drawText(240,"To make changes effective, a reboot is required",green);
 					drawText(260,"Press Triangle to perform a console reboot",green);
@@ -339,6 +338,7 @@ int main(){
 					sqlite3_close(db);
 					
 					//Triggering a database restore
+
 					sceRegMgrSetKeyInt("/CONFIG/SHELL", "appdb_rebuild_flag", 0);
 					
 					drawText(200,"Done!",green);
