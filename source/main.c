@@ -257,30 +257,8 @@ int main(){
 					sqlite3_close(db);
 					
 					//Triggering a database restore
-					drawText(180,"Nulling MID value in id.dat",white);
-					FILE* fd = fopen("ux0:/id.dat", "r+");
-					fseek(fd, 0, SEEK_END);
-					int id_size = ftell(fd);
-					char* id_buf = (char*)malloc(id_size);
-					fseek(fd, 0, SEEK_SET);
-					fread(id_buf, id_size, 1, fd);
-					char* mid_offs = strstr(id_buf, "MID=");
-					if (mid_offs == NULL){
-						fseek(fd, 0, SEEK_END); // Just to be sure
-						fwrite("\nMID=\n", 6, 1, fd);
-						fclose(fd);
-					}else{
-						fclose(fd);
-						fd = fopen("ux0:/id.dat", "w+");
-						char* mid_end = strstr(mid_offs, "\n");
-						if (mid_end == NULL) fwrite(id_buf, mid_offs - id_buf + 4, 1, fd);
-						else{
-							memcpy(&mid_offs[4], mid_end, id_size - (mid_end - id_buf));
-							fwrite(id_buf, id_size - (mid_end - (mid_offs + 4)), 1, fd);
-						}
-						fclose(fd);
-					}
-					
+					sceRegMgrSetKeyInt("/CONFIG/SHELL", "appdb_rebuild_flag", 0);
+										
 					drawText(200,"Done!",green);
 					drawText(240,"To make changes effective, a reboot is required",green);
 					drawText(260,"Press Triangle to perform a console reboot",green);
@@ -360,29 +338,8 @@ int main(){
 					sqlite3_close(db);
 					
 					//Triggering a database restore
-					drawText(180,"Nulling MID value in id.dat",white);
-					FILE* fd = fopen("ux0:/id.dat", "r+");
-					fseek(fd, 0, SEEK_END);
-					int id_size = ftell(fd);
-					char* id_buf = (char*)malloc(id_size);
-					fseek(fd, 0, SEEK_SET);
-					fread(id_buf, id_size, 1, fd);
-					char* mid_offs = strstr(id_buf, "MID=");
-					if (mid_offs == NULL){
-						fseek(fd, 0, SEEK_END); // Just to be sure
-						fwrite("\nMID=\n", 6, 1, fd);
-						fclose(fd);
-					}else{
-						fclose(fd);
-						fd = fopen("ux0:/id.dat", "w+");
-						char* mid_end = strstr(mid_offs, "\n");
-						if (mid_end == NULL) fwrite(id_buf, mid_offs - id_buf + 4, 1, fd);
-						else{
-							memcpy(&mid_offs[4], mid_end, id_size - (mid_end - id_buf));
-							fwrite(id_buf, id_size - (mid_end - (mid_offs + 4)), 1, fd);
-						}
-						fclose(fd);
-					}
+
+					sceRegMgrSetKeyInt("/CONFIG/SHELL", "appdb_rebuild_flag", 0);
 					
 					drawText(200,"Done!",green);
 					drawText(220,"To make changes effective, a reboot is required",green);
