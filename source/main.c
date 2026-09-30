@@ -16,8 +16,6 @@
 extern char* sqlite3_temp_directory;
 
 // Copy-pasted from VitaShell by TheFlow
-int vshIoUmount(int id, int a2, int a3, int a4);
-int _vshIoMount(int id, const char *path, int permission, void *buf);
 int vshIoMount(int id, const char *path, int permission, int a4, int a5, int a6) {
 	uint32_t buf[6];
 

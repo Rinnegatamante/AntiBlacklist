@@ -6,7 +6,7 @@ INCLUDES	:= include
 LIBS = -lvita2d -lSceLibKernel_stub -lSceVshBridge_stub \
 	-lSceCtrl_stub -lm -lScePgf_stub -ljpeg -lc \
 	-lScePower_stub -lSceCommonDialog_stub -lpng16 -lfreetype \
-	-lz -lSceSysmodule_stub -lSceGxm_stub -lSceDisplay_stub
+	-lz -lSceSysmodule_stub -lSceGxm_stub -lSceDisplay_stub -lSceAppMgr_stub
 
 CFILES   := $(foreach dir,$(SOURCES), $(wildcard $(dir)/*.c))
 CPPFILES   := $(foreach dir,$(SOURCES), $(wildcard $(dir)/*.cpp))
@@ -23,13 +23,13 @@ ASFLAGS = $(CFLAGS)
 all: $(TARGET).vpk
 
 $(TARGET).vpk: $(TARGET).velf
-	vita-make-fself -c $< .\build\eboot.bin
-	vita-mksfoex -s TITLE_ID=$(TITLE) "$(TARGET)" param.sfo
-	cp -f param.sfo ./build/sce_sys/param.sfo
-	
-	#------------ Comment this if you don't have 7zip ------------------
-	7z a -tzip ./$(TARGET).vpk -r .\build\sce_sys\* .\build\eboot.bin 
-	#-------------------------------------------------------------------
+	vita-make-fself -c $< build/eboot.bin
+	vita-mksfoex -s TITLE_ID=$(TITLE) "$(TARGET)" build/sce_sys/param.sfo
+	vita-pack-vpk -s build/sce_sys/param.sfo -b build/eboot.bin \
+		-a build/sce_sys/icon0.png=sce_sys/icon0.png \
+		-a build/sce_sys/livearea/contents/bg.png=sce_sys/livearea/contents/bg.png \
+		-a build/sce_sys/livearea/contents/startup.png=sce_sys/livearea/contents/startup.png \
+		-a build/sce_sys/livearea/contents/template.xml=sce_sys/livearea/contents/template.xml $@
 
 %.velf: %.elf
 	$(PREFIX)-strip -g $<
